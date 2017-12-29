@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import firebase from "firebase";
-import logo from "./logo.svg";
 import "./App.css";
+import FileUpload from "./FileUpload"
 
 class App extends Component {
   constructor(props) {
@@ -29,7 +29,7 @@ class App extends Component {
     firebase
       .auth()
       .signOut()
-      .then(res => console.log(`Bye ${res.user.email}!`))
+      .then(res => console.log(`Bye...!`))
       .catch(err => console.log(`Error ${err.code}: ${err.message}`));
   };
 
@@ -40,6 +40,7 @@ class App extends Component {
           <img width="100" src={this.state.user.photoURL} alt={this.state.user.displayName} />
           <p>Hola {this.state.user.displayName}!</p>
           <button onClick={this.hanndleLogout}>Logout</button>
+          <FileUpload/>
         </div>
       );
     } else {
