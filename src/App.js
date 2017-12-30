@@ -8,15 +8,17 @@ class App extends Component {
     super(props);
     this.state = {
       user: null,
+      uploadValue: 0,
       pictures: []
     };
   }
 
-  componentWillMount = () => {
-    firebase.auth().onAuthStateChanged(user => {
-      this.setState({ user });
-    });
-    firebase
+  componentWillMount = async () => {
+    try {
+      const user = await firebase.auth().onAuthStateChanged(user => {
+        this.setState({ user });
+      });
+      const snapshot = await firebase
       .database()
       .ref("pictures")
       .on("child_added", snapshot => {
@@ -24,23 +26,29 @@ class App extends Component {
           pictures: this.state.pictures.concat(snapshot.val())
         });
       });
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  handleAuth = () => {
-    const provider = new firebase.auth.GoogleAuthProvider();
-    firebase
-      .auth()
-      .signInWithPopup(provider)
-      .then(res => console.log(`Logged as ${res.user.email}`))
-      .catch(err => console.log(`Error ${err.code}: ${err.message}`));
+  handleAuth = async () => {
+    try {
+      const provider = await new firebase.auth.GoogleAuthProvider();
+      const response = await firebase.auth().signInWithPopup(provider);
+      console.log(`Logged as ${response.user.email}`);
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  hanndleLogout = () => {
-    firebase
+  handleLogout = async () => {
+    try {
+      const logout = await firebase
       .auth()
       .signOut()
-      .then(res => console.log(`Bye...!`))
-      .catch(err => console.log(`Error ${err.code}: ${err.message}`));
+    } catch (err) {
+      console.log(err)
+    }
   };
 
   handleUpload = e => {
@@ -50,7 +58,7 @@ class App extends Component {
     task.on(
       "state_changed",
       snapshot => {
-        let percentage = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+        let percentage = snapshot.bytesTransferred / snapshot.totalBytes * 100;
         this.setState({
           uploadValue: percentage
         });
@@ -81,17 +89,30 @@ class App extends Component {
             alt={this.state.user.displayName}
           />
           <p>Hola {this.state.user.displayName}!</p>
-          <button onClick={this.hanndleLogout}>Logout</button>
-          <FileUpload onUpload={this.handleUpload} />
-          {this.state.pictures.map(picture => (
-            <div>
-              <img width="320" src={picture.image} />
-              <br />
-              <img width="100" src={picture.photoURL} alt={picture.displayName} />
-              <br />
-              <span>{picture.displayName}</span>
-            </div>
-          ))}
+          <button onClick={this.handleLogout}>Logout</button>
+          <FileUpload
+            onUpload={this.handleUpload}
+            onUploadValue={this.state.uploadValue}
+          />
+          {this.state.pictures
+            .map((picture, index) => (
+              <div key={index}>
+                <img
+                  width="320"
+                  src={picture.image}
+                  alt={picture.displayName}
+                />
+                <br />
+                <img
+                  width="100"
+                  src={picture.photoURL}
+                  alt={picture.displayName}
+                />
+                <br />
+                <span>{picture.displayName}</span>
+              </div>
+            ))
+            .reverse()}
         </div>
       );
     } else {
